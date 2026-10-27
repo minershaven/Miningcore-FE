@@ -25,12 +25,12 @@
 
   /* ---------------- brand ---------------- */
   const MARK = `<svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
-    <defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#ea580c"/></linearGradient></defs>
+    <defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1e3a8a"/></linearGradient></defs>
     <path d="M32 3 57 17.5v29L32 61 7 46.5v-29z" fill="url(#mk)"/>
     <path d="M32 11 50 21.5v21L32 53 14 42.5v-21z" fill="#0a0a0a"/>
-    <path d="M20 26c6-5 18-5 24 0" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
-    <path d="M32 24v20" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
-    <path d="M26 44h12" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    <path d="M20 26c6-5 18-5 24 0" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+    <path d="M32 24v20" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+    <path d="M26 44h12" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" opacity=".7"/>
   </svg>`;
   function brandName(cls = "") {
     const parts = (C.name || "Pool").split(" ");
@@ -76,7 +76,7 @@
   const effortHtml = (e) => {
     if (e == null) return "—";
     const v = e * 100;
-    return `<span class="${v <= 100 ? "green" : v <= 200 ? "accent" : "red"}">${v.toFixed(1)}%</span>`;
+    return `<span class="${v <= 100 ? "green" : v <= 200 ? "warn" : "red"}">${v.toFixed(1)}%</span>`;
   };
   const statusBadge = (b) => {
     const s = (b.status || "").toLowerCase();
@@ -443,7 +443,7 @@
         <div class="card">
           <div class="card-head"><h3>Pool Hashrate</h3>
             <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-              <div class="chart-legend"><span><i style="background:var(--accent)"></i>Hashrate</span><span><i style="background:var(--blue)"></i>Miners</span></div>
+              <div class="chart-legend"><span><i style="background:var(--accent)"></i>Hashrate</span><span><i style="background:var(--violet)"></i>Miners</span></div>
               <div class="seg">${["day", "month"].map((r) => `<button class="${S.chartRange === r ? "on" : ""}" data-range="${r}">${r === "day" ? "24h" : "30d"}</button>`).join("")}</div>
             </div></div>
           <div class="card-pad"><div id="pool-chart" style="height:300px"></div></div>
@@ -470,8 +470,8 @@
       <div class="card" style="margin-top:16px"><div class="card-head"><h3>Top Miners</h3><span class="muted">Last 24 hours</span></div>${minersTable(pool, pool.topMiners || [])}</div>`;
       Charts.lineChart($("#pool-chart"), {
         series: [
-          { name: "Hashrate", color: "#f59e0b", values: perf.map((d) => ({ t: +new Date(d.created), v: d.poolHashrate })) },
-          { name: "Miners", color: "#60a5fa", axis: "right", area: false, values: perf.map((d) => ({ t: +new Date(d.created), v: d.connectedMiners })) }
+          { name: "Hashrate", color: "#3b82f6", values: perf.map((d) => ({ t: +new Date(d.created), v: d.poolHashrate })) },
+          { name: "Miners", color: "#a78bfa", axis: "right", area: false, values: perf.map((d) => ({ t: +new Date(d.created), v: d.connectedMiners })) }
         ],
         format: F.hashrate,
         formatRight: (v) => F.num(v)
@@ -619,7 +619,7 @@
 
     Charts.lineChart($("#miner-chart"), {
       series: [
-        { name: "Hashrate", color: "#f59e0b", values: samples },
+        { name: "Hashrate", color: "#3b82f6", values: samples },
         { name: "24h avg", color: "#7c7c85", area: false, dash: true, values: samples.length ? [{ t: samples[0].t, v: avg }, { t: samples[samples.length - 1].t, v: avg }] : [] }
       ],
       format: F.hashrate
