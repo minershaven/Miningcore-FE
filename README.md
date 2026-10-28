@@ -65,6 +65,6 @@ wget https://raw.githubusercontent.com/minershaven/Miningcore-FE/main/deploy/ins
 sudo bash install-miningcore.sh
 ```
 
-Everything installs into `~/miningcore` in the home folder of the user who runs `sudo`, and Miningcore runs as that user. The starter config in `~/miningcore/config.json` contains one Zano pool, which is **disabled**. Miningcore won't run with zero pools enabled, so the service starts only after you enable a pool and run `sudo systemctl restart miningcore`. Re-running the script is safe. It rebuilds from the latest source and keeps your config and database.
+The starter config in `/opt/miningcore/config.json` contains one Zano pool, which is **disabled**. Miningcore won't run with zero pools enabled, so the service starts only after you enable a pool and run `sudo systemctl restart miningcore`. Re-running the script is safe. It rebuilds from the latest source and keeps your config and database.
 
 `deploy/nginx-theminershaven.org.conf` is the matching nginx site.

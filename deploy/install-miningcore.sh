@@ -3,8 +3,7 @@
 #  Miningcore installer for Ubuntu 22.04 / 24.04
 #  - installs build tools, .NET 9 SDK and PostgreSQL
 #  - creates the miningcore database + tables
-#  - clones and builds your Miningcore fork into ~/miningcore/build
-#    (home folder of the user who runs sudo; set INSTALL_USER to override)
+#  - clones and builds your Miningcore fork into /opt/miningcore/build
 #  - writes a starter config (API on 127.0.0.1:4000 for nginx)
 #  - installs a systemd service so Miningcore starts on boot
 #
@@ -19,16 +18,11 @@ set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/minershaven/miningcoreV4.git}"
 BRANCH="${BRANCH:-main}"
-# Everything lives in the home folder of the user who ran sudo,
-# and Miningcore runs as that user, so you can edit the config without sudo.
-SVC_USER="${INSTALL_USER:-${SUDO_USER:-root}}"
-id -u "$SVC_USER" >/dev/null 2>&1 || { echo "User $SVC_USER does not exist"; exit 1; }
-SVC_HOME=$(getent passwd "$SVC_USER" | cut -d: -f6)
-BASE="${BASE:-$SVC_HOME/miningcore}"
+BASE=/opt/miningcore
 SRC="$BASE/src"
 BUILD="$BASE/build"
 CONFIG="$BASE/config.json"
-OLD_BASE=/opt/miningcore   # earlier versions of this script installed here
+SVC_USER=miningcore
 DB_NAME=miningcore
 DB_USER=miningcore
 API_PORT=4000
@@ -78,20 +72,8 @@ apt-get install -y postgresql postgresql-contrib
 systemctl enable --now postgresql
 
 # --------------------------------------------------------------- user
-[[ "$SVC_USER" == "root" ]] && warn "Installing for root (into $BASE). Run with sudo from your normal user to install into that user's home instead."
+id -u "$SVC_USER" >/dev/null 2>&1 || useradd --system --home "$BASE" --shell /usr/sbin/nologin "$SVC_USER"
 mkdir -p "$BASE" "$BASE/logs"
-
-# Move settings over from an older /opt/miningcore install
-if [[ -d "$OLD_BASE" && "$OLD_BASE" != "$BASE" ]]; then
-  say "Found an older install in $OLD_BASE; carrying its config and DB password over"
-  systemctl stop miningcore 2>/dev/null || true
-  [[ -f "$OLD_BASE/.dbpass" && ! -f "$BASE/.dbpass" ]] && cp -p "$OLD_BASE/.dbpass" "$BASE/.dbpass"
-  if [[ -f "$OLD_BASE/config.json" && ! -f "$CONFIG" ]]; then
-    sed "s#$OLD_BASE#$BASE#g" "$OLD_BASE/config.json" > "$CONFIG"
-  fi
-  [[ -f "$OLD_BASE/recovered-shares.txt" && ! -f "$BASE/recovered-shares.txt" ]] && cp -p "$OLD_BASE/recovered-shares.txt" "$BASE/" || true
-  MIGRATED_FROM_OPT=1
-fi
 
 # ------------------------------------------------------------- source
 say "Fetching Miningcore source ($REPO_URL, branch $BRANCH)"
@@ -221,10 +203,9 @@ else
 }
 EOF
 fi
-chmod 600 "$CONFIG"
-SVC_GROUP=$(id -gn "$SVC_USER")
-chown -R "$SVC_USER:$SVC_GROUP" "$BASE"
-chmod 600 "$BASE/.dbpass"
+chmod 640 "$CONFIG"
+chown -R "$SVC_USER:$SVC_USER" "$BASE"
+chown root:"$SVC_USER" "$CONFIG"
 
 # ------------------------------------------------------------ service
 say "Installing systemd service"
@@ -238,7 +219,7 @@ Requires=postgresql.service
 [Service]
 Type=simple
 User=$SVC_USER
-Group=$SVC_GROUP
+Group=$SVC_USER
 WorkingDirectory=$BUILD
 ExecStart=$BUILD/Miningcore -c $CONFIG
 Restart=always
@@ -276,13 +257,6 @@ fi
 
 if command -v ufw >/dev/null && ufw status | grep -q 'Status: active'; then
   warn "ufw is active: open each stratum port you enable, e.g.  sudo ufw allow 3364/tcp"
-fi
-
-if [[ "${MIGRATED_FROM_OPT:-0}" == "1" ]]; then
-  warn "Your old install is still in $OLD_BASE. Once everything works, remove it with:  sudo rm -rf $OLD_BASE"
-  if id -u miningcore >/dev/null 2>&1 && [[ "$SVC_USER" != "miningcore" ]]; then
-    echo "   The old 'miningcore' system user is no longer used; remove it with:  sudo userdel miningcore"
-  fi
 fi
 
 cat <<EOF
