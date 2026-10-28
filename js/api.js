@@ -41,6 +41,7 @@
   }
 
   function setStatus(s) { listeners.forEach((fn) => fn(s)); }
+  const cap = (v) => String(v).charAt(0).toUpperCase() + String(v).slice(1).toLowerCase();
 
   const api = {
     base,
@@ -48,12 +49,13 @@
     onStatus: (fn) => listeners.add(fn),
     pools: () => get("/pools").then((r) => r.pools || []),
     pool: (id) => get(`/pools/${encodeURIComponent(id)}`).then((r) => r.pool),
-    performance: (id, r = "day", i = "hour") => get(`/pools/${encodeURIComponent(id)}/performance?r=${r}&i=${i}`).then((x) => x.stats || []),
+    // Miningcore binds these enums case-sensitively: it accepts "Day"/"Month"/"Hour" but rejects "day" with HTTP 400
+    performance: (id, r = "day", i = "hour") => get(`/pools/${encodeURIComponent(id)}/performance?r=${cap(r)}&i=${cap(i)}`).then((x) => x.stats || []),
     miners: (id, page = 0, pageSize = 25) => get(`/pools/${encodeURIComponent(id)}/miners?page=${page}&pageSize=${pageSize}`),
     blocks: (page = 0, pageSize = 15) => get(`/blocks?page=${page}&pageSize=${pageSize}`),
     poolBlocks: (id, page = 0, pageSize = 15) => get(`/v2/pools/${encodeURIComponent(id)}/blocks?page=${page}&pageSize=${pageSize}`),
     poolPayments: (id, page = 0, pageSize = 15) => get(`/v2/pools/${encodeURIComponent(id)}/payments?page=${page}&pageSize=${pageSize}`),
-    miner: (id, addr, perfMode = "day") => get(`/pools/${encodeURIComponent(id)}/miners/${encodeURIComponent(addr)}?perfMode=${perfMode}`),
+    miner: (id, addr, perfMode = "day") => get(`/pools/${encodeURIComponent(id)}/miners/${encodeURIComponent(addr)}?perfMode=${cap(perfMode)}`),
     minerPayments: (id, addr, page = 0, pageSize = 15) => get(`/v2/pools/${encodeURIComponent(id)}/miners/${encodeURIComponent(addr)}/payments?page=${page}&pageSize=${pageSize}`),
     minerBlocks: (id, addr, page = 0, pageSize = 15) => get(`/v2/pools/${encodeURIComponent(id)}/miners/${encodeURIComponent(addr)}/blocks?page=${page}&pageSize=${pageSize}`),
     minerEarnings: (id, addr, page = 0, pageSize = 30) => get(`/v2/pools/${encodeURIComponent(id)}/miners/${encodeURIComponent(addr)}/earnings/daily?page=${page}&pageSize=${pageSize}`),
@@ -203,7 +205,7 @@
         const pool = pools.find((x) => x.id === seg[1]);
         if (!pool) return res(null);
         if (seg.length === 2) return res({ pool });
-        if (seg[2] === "performance") return res({ stats: perf(pool, q.get("r") || "day", q.get("i") || "hour") });
+        if (seg[2] === "performance") return res({ stats: perf(pool, (q.get("r") || "day").toLowerCase(), (q.get("i") || "hour").toLowerCase()) });
         if (seg[2] === "blocks") { const b = blocks.filter((x) => x.poolId === pool.id); return res(v2 ? paged(b, page, size) : b); }
         if (seg[2] === "payments") return res(v2 ? paged(payments(pool), page, size) : payments(pool));
         if (seg[2] === "miners" && seg.length === 3) return res(pool.topMiners.slice(page * size, page * size + size));
