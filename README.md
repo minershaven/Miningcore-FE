@@ -56,3 +56,15 @@ Set `apiBase: "https://api.example.com/api"`, and make sure that domain sends CO
 - `demoFallback: true` shows clearly labelled sample data when the API can't be reached. It's useful for previewing the design. Keep it `false` in production.
 - Pool-wide totals never add hashrates from different algorithms together. Hashrate is shown per algorithm instead.
 - Miner lookups for Ethereum-family coins are lowercased by Miningcore itself.
+
+## Installing Miningcore on the server
+`deploy/install-miningcore.sh` sets up the backend on Ubuntu 22.04 or 24.04. It installs .NET 9, PostgreSQL, the database tables, a build of your Miningcore fork, a starter config, and a `miningcore` systemd service:
+
+```
+wget https://raw.githubusercontent.com/minershaven/Miningcore-FE/main/deploy/install-miningcore.sh
+sudo bash install-miningcore.sh
+```
+
+The starter config in `/opt/miningcore/config.json` contains one Zano pool, which is **disabled**. Miningcore won't run with zero pools enabled, so the service starts only after you enable a pool and run `sudo systemctl restart miningcore`. Re-running the script is safe. It rebuilds from the latest source and keeps your config and database.
+
+`deploy/nginx-theminershaven.org.conf` is the matching nginx site.
