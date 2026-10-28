@@ -33,7 +33,7 @@ window.POOL_CONFIG = {
   // pingUrl (optional): any small HTTPS URL on that server, used to show latency.
   stratumLocations: [
     // One VPS for now. Add more servers here later (host + optional pingUrl).
-    { country: "Main server", city: "", region: "", flag: null, host: "theminershaven.org", pingUrl: null }
+    { country: "Main server", city: "", region: "", flag: null, host: "theminershaven.org", pingUrl: "https://theminershaven.org/api/health-check" }
   ],
 
   // Optional per-symbol icon overrides. Unknown coins get a generated badge.
