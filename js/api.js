@@ -24,7 +24,7 @@
       setStatus("on");
       return data;
     } catch (e) {
-      if (!everOk && C.demoFallback === true && (!e.status || e.status === 404)) {
+      if (!everOk && C.demoFallback === true) {
         demo = true;
         setStatus("demo");
         return Demo.route(path);
