@@ -10,7 +10,7 @@ window.POOL_CONFIG = {
   name: "Miners Haven",
   tagline: "Built by miners, for miners",
   description:
-    "Your hashpower, your strategy. Choose high-stakes SOLO mining or steady PPLNS payouts across every coin we run. Low-latency stratum servers, transparent stats and fast payouts — 24/7.",
+    "Bitcoin, Litecoin, Dogecoin and Zano. Choose high-stakes SOLO mining or steady PPLNS payouts on every coin, with transparent live stats and automatic payouts, 24/7.",
   logo: null, // e.g. "img/logo.svg" — leave null to use the built-in mark
 
   // Miningcore API. Use "/api" when the UI is served from the same host
@@ -32,9 +32,8 @@ window.POOL_CONFIG = {
   // so hostnames are configured here.
   // pingUrl (optional): any small HTTPS URL on that server, used to show latency.
   stratumLocations: [
-    { country: "United States", city: "East",      region: "North America", flag: "us", host: "us.example-pool.com",   pingUrl: null },
-    { country: "Germany",       city: "Frankfurt", region: "Europe",        flag: "de", host: "eu.example-pool.com",   pingUrl: null },
-    { country: "Singapore",     city: "",          region: "Asia",          flag: "sg", host: "asia.example-pool.com", pingUrl: null }
+    // One VPS for now. Add more servers here later (host + optional pingUrl).
+    { country: "Main server", city: "", region: "", flag: null, host: "theminershaven.org", pingUrl: null }
   ],
 
   // Optional per-symbol icon overrides. Unknown coins get a generated badge.

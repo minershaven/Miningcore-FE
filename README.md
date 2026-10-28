@@ -68,3 +68,21 @@ sudo bash install-miningcore.sh
 The starter config in `/opt/miningcore/config.json` contains one Zano pool, which is **disabled**. Miningcore won't run with zero pools enabled, so the service starts only after you enable a pool and run `sudo systemctl restart miningcore`. Re-running the script is safe. It rebuilds from the latest source and keeps your config and database.
 
 `deploy/nginx-theminershaven.org.conf` is the matching nginx site.
+
+## Pool config: BTC, LTC, DOGE, Zano
+`deploy/miningcore-config.json` defines 8 pools, a PPLNS and a SOLO pool for each coin, with a 1% fee and two stratum ports per pool:
+
+| Pool | Ports (standard / high diff) | Daemon RPC |
+|---|---|---|
+| btc-pplns / btc-solo | 3001, 3002 / 3011, 3012 | bitcoind 8332 |
+| ltc-pplns / ltc-solo | 3021, 3022 / 3031, 3032 | litecoind 9332 |
+| doge-pplns / doge-solo | 3041, 3042 / 3051, 3052 | dogecoind 22555 |
+| zano-pplns / zano-solo | 3061, 3062 / 3071, 3072 | zanod 11211, simplewallet 11212 |
+
+`deploy/coins-zano.json` adds Zano's coin definition. The fork has Zano support code, but Zano is missing from its `coins.json`.
+
+**Address rules:** these come from the fork's address parsing, and breaking them can lose block rewards.
+- BTC pool address must be native SegWit `bc1q…`. No `3…`, `1…` or `bc1p…` addresses.
+- LTC pool address must be native SegWit `ltc1q…`.
+- DOGE pool address must be a normal `D…` address.
+- Zano pool address is the `Zx…` address of the wallet that simplewallet runs.
