@@ -100,6 +100,14 @@ say "Building Miningcore (this takes several minutes)"
   || die "Build failed. Scroll up for the first line containing 'error' and send it over."
 [[ -x "$BUILD/Miningcore" ]] || die "Build finished but $BUILD/Miningcore was not found"
 
+# The fork's csproj has the native-library build step commented out, so the
+# .so files (scrypt, Zano, ProgPow, ...) must be compiled separately.
+say "Building native hashing libraries (a few minutes)"
+( cd "$SRC/src/Miningcore" && bash build-libs-linux.sh "$BUILD" ) || warn "Some native libraries failed to build (only matters for coins that use them)"
+for lib in libmultihash libcryptonote libzanonote libprogpowz; do
+  [[ -f "$BUILD/$lib.so" ]] || warn "$lib.so is missing; pools that need it (LTC/DOGE: libmultihash, Zano: the other three) will fail"
+done
+
 # ----------------------------------------------------------- database
 say "Setting up the PostgreSQL database"
 DB_PASS_FILE="$BASE/.dbpass"
