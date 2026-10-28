@@ -84,7 +84,7 @@ if [[ -d "$SRC/.git" ]]; then
     git -C "$SRC" fetch --unshallow origin || git -C "$SRC" fetch origin
   fi
   git -C "$SRC" fetch origin "$BRANCH"
-  git -C "$SRC" checkout -q -B "$BRANCH" "origin/$BRANCH"
+  git -C "$SRC" checkout -q -f -B "$BRANCH" "origin/$BRANCH"   # -f: discard hand edits; source of truth is GitHub
   git -C "$SRC" reset --hard "origin/$BRANCH"
 else
   rm -rf "$SRC"
