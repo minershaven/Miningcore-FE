@@ -92,11 +92,12 @@ fi
 
 # -------------------------------------------------------------- build
 say "Building Miningcore (this takes several minutes)"
-if ! ( cd "$SRC/src/Miningcore" && dotnet publish -c Release --framework net9.0 -o "$BUILD" ); then
-  warn "Build failed; retrying without GitVersion (only affects the version string Miningcore prints at startup)"
-  ( cd "$SRC/src/Miningcore" && dotnet publish -c Release --framework net9.0 -o "$BUILD" -p:DisableGitVersionTask=true ) \
-    || die "Build failed. Scroll up for the first 'error' line and send it over."
-fi
+# GitVersion only stamps the version string Miningcore prints at startup, and it
+# breaks easily on servers (git ownership checks, detached checkouts), so skip it.
+git config --global --add safe.directory "$SRC" 2>/dev/null || true
+( cd "$SRC/src/Miningcore" && \
+  dotnet publish -c Release --framework net9.0 -o "$BUILD" -p:DisableGitVersionTask=true -p:NuGetAudit=false ) \
+  || die "Build failed. Scroll up for the first line containing 'error' and send it over."
 [[ -x "$BUILD/Miningcore" ]] || die "Build finished but $BUILD/Miningcore was not found"
 
 # ----------------------------------------------------------- database
