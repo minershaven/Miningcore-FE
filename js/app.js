@@ -560,7 +560,7 @@
     if (!quiet) loading();
     const [pool, stats] = await Promise.all([
       loadPools().then(() => poolById(id) || API.pool(id)),
-      API.miner(id, addr).catch((e) => (e.status === 404 ? null : Promise.reject(e)))
+      API.miner(id, addr).catch((e) => (e.status === 400 || e.status === 404 ? null : Promise.reject(e)))
     ]);
     if (tok !== renderToken) return;
     if (!pool) { app.innerHTML = `<div class="container"><div class="error-box">Pool <b>${esc(id)}</b> was not found.</div></div>`; return; }

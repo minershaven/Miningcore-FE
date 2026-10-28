@@ -17,6 +17,10 @@
         err.status = res.status;
         throw err;
       }
+      everOk = true;
+      setStatus("on");
+      // Miningcore answers 204 (no body) when it has no data, e.g. an unknown miner
+      if (res.status === 204) return null;
       const ct = res.headers.get("content-type") || "";
       if (!ct.includes("json")) throw new Error(`API at ${base} did not return JSON for ${path}`);
       const data = await res.json();
