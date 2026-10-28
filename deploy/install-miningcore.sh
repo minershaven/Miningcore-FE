@@ -77,17 +77,26 @@ mkdir -p "$BASE" "$BASE/logs"
 
 # ------------------------------------------------------------- source
 say "Fetching Miningcore source ($REPO_URL, branch $BRANCH)"
+# Full history is needed: the build runs GitVersion, which fails on shallow clones.
 if [[ -d "$SRC/.git" ]]; then
-  git -C "$SRC" fetch --depth 1 origin "$BRANCH"
+  if [[ "$(git -C "$SRC" rev-parse --is-shallow-repository)" == "true" ]]; then
+    git -C "$SRC" fetch --unshallow origin || git -C "$SRC" fetch origin
+  fi
+  git -C "$SRC" fetch origin "$BRANCH"
+  git -C "$SRC" checkout -q -B "$BRANCH" "origin/$BRANCH"
   git -C "$SRC" reset --hard "origin/$BRANCH"
 else
   rm -rf "$SRC"
-  git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$SRC" || die "Clone failed. If the repo is private, re-run with REPO_URL=https://<TOKEN>@github.com/... (see top of script)"
+  git clone --branch "$BRANCH" "$REPO_URL" "$SRC" || die "Clone failed. If the repo is private, re-run with REPO_URL=https://<TOKEN>@github.com/... (see top of script)"
 fi
 
 # -------------------------------------------------------------- build
 say "Building Miningcore (this takes several minutes)"
-( cd "$SRC/src/Miningcore" && dotnet publish -c Release --framework net9.0 -o "$BUILD" )
+if ! ( cd "$SRC/src/Miningcore" && dotnet publish -c Release --framework net9.0 -o "$BUILD" ); then
+  warn "Build failed; retrying without GitVersion (only affects the version string Miningcore prints at startup)"
+  ( cd "$SRC/src/Miningcore" && dotnet publish -c Release --framework net9.0 -o "$BUILD" -p:DisableGitVersionTask=true ) \
+    || die "Build failed. Scroll up for the first 'error' line and send it over."
+fi
 [[ -x "$BUILD/Miningcore" ]] || die "Build finished but $BUILD/Miningcore was not found"
 
 # ----------------------------------------------------------- database
