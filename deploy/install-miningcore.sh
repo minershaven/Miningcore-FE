@@ -95,6 +95,9 @@ fi
 say "Building Miningcore (this takes several minutes)"
 # GitVersion only stamps the version string Miningcore prints at startup, and it
 # breaks easily on servers (git ownership checks, detached checkouts), so skip it.
+# A running Miningcore keeps its binary locked ("Text file busy"), so stop it first.
+# The service is started again at the end of this script.
+systemctl stop miningcore 2>/dev/null || true
 ( cd "$SRC/src/Miningcore" && \
   dotnet publish -c Release --framework net9.0 -o "$BUILD" -p:DisableGitVersionTask=true -p:NuGetAudit=false ) \
   || die "Build failed. Scroll up for the first line containing 'error' and send it over."
