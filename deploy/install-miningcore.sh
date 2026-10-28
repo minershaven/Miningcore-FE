@@ -3,7 +3,8 @@
 #  Miningcore installer for Ubuntu 22.04 / 24.04
 #  - installs build tools, .NET 9 SDK and PostgreSQL
 #  - creates the miningcore database + tables
-#  - clones and builds your Miningcore fork into /opt/miningcore/build
+#  - clones and builds your Miningcore fork into ~/miningcore/build
+#    (home folder of the user who runs sudo; set INSTALL_USER to override)
 #  - writes a starter config (API on 127.0.0.1:4000 for nginx)
 #  - installs a systemd service so Miningcore starts on boot
 #
@@ -18,11 +19,16 @@ set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/minershaven/miningcoreV4.git}"
 BRANCH="${BRANCH:-main}"
-BASE=/opt/miningcore
+# Everything lives in the home folder of the user who ran sudo,
+# and Miningcore runs as that user, so you can edit the config without sudo.
+SVC_USER="${INSTALL_USER:-${SUDO_USER:-root}}"
+id -u "$SVC_USER" >/dev/null 2>&1 || { echo "User $SVC_USER does not exist"; exit 1; }
+SVC_HOME=$(getent passwd "$SVC_USER" | cut -d: -f6)
+BASE="${BASE:-$SVC_HOME/miningcore}"
 SRC="$BASE/src"
 BUILD="$BASE/build"
 CONFIG="$BASE/config.json"
-SVC_USER=miningcore
+OLD_BASE=/opt/miningcore   # earlier versions of this script installed here
 DB_NAME=miningcore
 DB_USER=miningcore
 API_PORT=4000
@@ -72,11 +78,24 @@ apt-get install -y postgresql postgresql-contrib
 systemctl enable --now postgresql
 
 # --------------------------------------------------------------- user
-id -u "$SVC_USER" >/dev/null 2>&1 || useradd --system --home "$BASE" --shell /usr/sbin/nologin "$SVC_USER"
+[[ "$SVC_USER" == "root" ]] && warn "Installing for root (into $BASE). Run with sudo from your normal user to install into that user's home instead."
 mkdir -p "$BASE" "$BASE/logs"
+
+# Move settings over from an older /opt/miningcore install
+if [[ -d "$OLD_BASE" && "$OLD_BASE" != "$BASE" ]]; then
+  say "Found an older install in $OLD_BASE; carrying its config and DB password over"
+  systemctl stop miningcore 2>/dev/null || true
+  [[ -f "$OLD_BASE/.dbpass" && ! -f "$BASE/.dbpass" ]] && cp -p "$OLD_BASE/.dbpass" "$BASE/.dbpass"
+  if [[ -f "$OLD_BASE/config.json" && ! -f "$CONFIG" ]]; then
+    sed "s#$OLD_BASE#$BASE#g" "$OLD_BASE/config.json" > "$CONFIG"
+  fi
+  [[ -f "$OLD_BASE/recovered-shares.txt" && ! -f "$BASE/recovered-shares.txt" ]] && cp -p "$OLD_BASE/recovered-shares.txt" "$BASE/" || true
+  MIGRATED_FROM_OPT=1
+fi
 
 # ------------------------------------------------------------- source
 say "Fetching Miningcore source ($REPO_URL, branch $BRANCH)"
+git config --global --add safe.directory "$SRC" 2>/dev/null || true
 # Full history is needed: the build runs GitVersion, which fails on shallow clones.
 if [[ -d "$SRC/.git" ]]; then
   if [[ "$(git -C "$SRC" rev-parse --is-shallow-repository)" == "true" ]]; then
@@ -94,7 +113,6 @@ fi
 say "Building Miningcore (this takes several minutes)"
 # GitVersion only stamps the version string Miningcore prints at startup, and it
 # breaks easily on servers (git ownership checks, detached checkouts), so skip it.
-git config --global --add safe.directory "$SRC" 2>/dev/null || true
 ( cd "$SRC/src/Miningcore" && \
   dotnet publish -c Release --framework net9.0 -o "$BUILD" -p:DisableGitVersionTask=true -p:NuGetAudit=false ) \
   || die "Build failed. Scroll up for the first line containing 'error' and send it over."
@@ -203,9 +221,10 @@ else
 }
 EOF
 fi
-chmod 640 "$CONFIG"
-chown -R "$SVC_USER:$SVC_USER" "$BASE"
-chown root:"$SVC_USER" "$CONFIG"
+chmod 600 "$CONFIG"
+SVC_GROUP=$(id -gn "$SVC_USER")
+chown -R "$SVC_USER:$SVC_GROUP" "$BASE"
+chmod 600 "$BASE/.dbpass"
 
 # ------------------------------------------------------------ service
 say "Installing systemd service"
@@ -219,7 +238,7 @@ Requires=postgresql.service
 [Service]
 Type=simple
 User=$SVC_USER
-Group=$SVC_USER
+Group=$SVC_GROUP
 WorkingDirectory=$BUILD
 ExecStart=$BUILD/Miningcore -c $CONFIG
 Restart=always
@@ -257,6 +276,13 @@ fi
 
 if command -v ufw >/dev/null && ufw status | grep -q 'Status: active'; then
   warn "ufw is active: open each stratum port you enable, e.g.  sudo ufw allow 3364/tcp"
+fi
+
+if [[ "${MIGRATED_FROM_OPT:-0}" == "1" ]]; then
+  warn "Your old install is still in $OLD_BASE. Once everything works, remove it with:  sudo rm -rf $OLD_BASE"
+  if id -u miningcore >/dev/null 2>&1 && [[ "$SVC_USER" != "miningcore" ]]; then
+    echo "   The old 'miningcore' system user is no longer used; remove it with:  sudo userdel miningcore"
+  fi
 fi
 
 cat <<EOF
