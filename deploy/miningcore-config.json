@@ -644,7 +644,7 @@
       "daemons": [
         {
           "host": "127.0.0.1",
-          "port": 8788,
+          "port": 8789,
           "user": "pool",
           "password": "REPLACE_NEOX_RPC_PASSWORD"
         }
@@ -722,7 +722,7 @@
       "daemons": [
         {
           "host": "127.0.0.1",
-          "port": 8788,
+          "port": 8789,
           "user": "pool",
           "password": "REPLACE_NEOX_RPC_PASSWORD"
         }

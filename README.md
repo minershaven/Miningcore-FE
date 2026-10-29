@@ -78,7 +78,7 @@ The starter config in `/opt/miningcore/config.json` contains one Zano pool, whic
 | ltc-pplns / ltc-solo | 3021, 3022 / 3031, 3032 | litecoind 9332 |
 | doge-pplns / doge-solo | 3041, 3042 / 3051, 3052 | dogecoind 22555 |
 | zano-pplns / zano-solo | 3061, 3062 / 3071, 3072 | zanod 11211, simplewallet 11212 |
-| neox-pplns / neox-solo | 3081, 3082 / 3091, 3092 | neoxad 8788 (set `rpcport=8788` in neoxa.conf) |
+| neox-pplns / neox-solo | 3081, 3082 / 3091, 3092 | neoxad RPC 8789 (set `rpcport=8789` in `~/.neoxacore/neoxa.conf`; 8788 is Neoxa's P2P port) |
 
 `deploy/coins-zano.json` adds Zano's coin definition. The fork has Zano support code, but Zano is missing from its `coins.json`.
 
