@@ -482,6 +482,7 @@
       }));
     } else if (tab === "connect") {
       el.innerHTML = connectBlock(pool, portsArr);
+      runPings(el);
     } else if (tab === "miners") {
       el.innerHTML = '<div class="loading" style="padding:40px"><div class="spinner"></div></div>';
       const key = "miners:" + pool.id, page = S.pages[key] || 0;
