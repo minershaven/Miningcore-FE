@@ -69,8 +69,8 @@ The starter config in `/opt/miningcore/config.json` contains one Zano pool, whic
 
 `deploy/nginx-theminershaven.org.conf` is the matching nginx site.
 
-## Pool config: BTC, LTC, DOGE, Zano
-`deploy/miningcore-config.json` defines 8 pools, a PPLNS and a SOLO pool for each coin, with a 1% fee and two stratum ports per pool:
+## Pool config: BTC, LTC, DOGE, Zano, NEOX
+`deploy/miningcore-config.json` defines 10 pools, a PPLNS and a SOLO pool for each coin, with a 1% fee and two stratum ports per pool:
 
 | Pool | Ports (standard / high diff) | Daemon RPC |
 |---|---|---|
@@ -78,6 +78,7 @@ The starter config in `/opt/miningcore/config.json` contains one Zano pool, whic
 | ltc-pplns / ltc-solo | 3021, 3022 / 3031, 3032 | litecoind 9332 |
 | doge-pplns / doge-solo | 3041, 3042 / 3051, 3052 | dogecoind 22555 |
 | zano-pplns / zano-solo | 3061, 3062 / 3071, 3072 | zanod 11211, simplewallet 11212 |
+| neox-pplns / neox-solo | 3081, 3082 / 3091, 3092 | neoxad 8788 (set `rpcport=8788` in neoxa.conf) |
 
 `deploy/coins-zano.json` adds Zano's coin definition. The fork has Zano support code, but Zano is missing from its `coins.json`.
 
@@ -86,3 +87,4 @@ The starter config in `/opt/miningcore/config.json` contains one Zano pool, whic
 - LTC pool address must be native SegWit `ltc1q…`.
 - DOGE pool address must be a normal `D…` address.
 - Zano pool address is the `Zx…` address of the wallet that simplewallet runs.
+- NEOX pool address is a normal address from `neoxa-cli getnewaddress`.
