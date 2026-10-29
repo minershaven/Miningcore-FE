@@ -40,7 +40,6 @@
   function brandMark() { return C.logo ? `<img class="mark" src="${esc(C.logo)}" alt="">` : MARK; }
 
   function initChrome() {
-    document.title = `${C.name} — Mining Pool`;
     $("#brand").innerHTML = brandMark() + brandName();
     $("#footer-brand").innerHTML = brandMark() + brandName();
     $("#footer-copy").textContent = `© ${new Date().getFullYear()} ${C.name}. All rights reserved.`;
@@ -793,6 +792,23 @@
   ];
   let lastPath = null;
 
+  // Per-route <title> and meta description (search engines and browser tabs)
+  const BASE_TITLE = document.title;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  const BASE_DESC = metaDesc ? metaDesc.content : "";
+  function setMeta(nav, path, args) {
+    const p = (nav === "pools" || nav === "connect") && args[0] ? poolById(args[0]) : null;
+    const coin = p ? `${p.coin?.name || p.coin?.symbol || p.id} ${F.scheme(p)}` : "";
+    const t = {
+      pools: p ? `${coin} Pool – Stats & Blocks` : "Mining Pools",
+      connect: p ? `How to Mine ${coin}` : "Connect Your Miner",
+      dashboard: path.startsWith("/miner/") ? "Miner Stats" : "Miner Dashboard",
+      blocks: "Recent Blocks", faq: "FAQ", api: "API"
+    }[nav];
+    document.title = t ? `${t} | ${C.name}` : BASE_TITLE;
+    if (metaDesc) metaDesc.content = p ? `Mine ${coin} on ${C.name}: stratum ports, ${p.poolFeePercent ?? 0}% fee, live hashrate, miners and blocks.` : BASE_DESC;
+  }
+
   async function route(quiet = false) {
     const path = decodeURI(location.hash.replace(/^#/, "") || "/");
     const match = routes.find(([re]) => re.test(path)) || routes[0];
@@ -801,7 +817,7 @@
     if (!quiet && path !== lastPath) window.scrollTo(0, 0);
     lastPath = path;
     $$("#mainnav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === match[2]));
-    try { await match[1](tok, quiet, ...args); }
+    try { await match[1](tok, quiet, ...args); if (tok === renderToken) setMeta(match[2], path, args); }
     catch (e) { console.error(e); if (!quiet && tok === renderToken) errorView(e); }
   }
 

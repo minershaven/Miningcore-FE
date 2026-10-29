@@ -88,3 +88,24 @@ The starter config in `/opt/miningcore/config.json` contains one Zano pool, whic
 - DOGE pool address must be a normal `D…` address.
 - Zano pool address is the `Zx…` address of the wallet that simplewallet runs.
 - NEOX pool address is a normal address from `neoxa-cli getnewaddress`.
+
+## SEO (search engines)
+
+The app itself uses `#/` routes, which search engines treat as a single page. `deploy/seo/build-seo.py`
+fills that gap: it reads the live `/api/pools` list and writes crawlable static pages into the web root:
+
+- `/coins/` (hub) and `/coins/<coin>/` for every coin: title, description, PPLNS/SOLO stratum URLs, fees, live stats, FAQ (with schema.org JSON-LD)
+- `sitemap.xml` and `robots.txt`
+- the `<!-- SEO:HEAD -->` / `<!-- SEO:BODY -->` blocks in `index.html` (title, description, Open Graph, coin links)
+
+New coins added to Miningcore get their own page on the next run. Install it on the server:
+
+```bash
+mkdir -p /opt/pool-seo
+cp deploy/seo/build-seo.py /opt/pool-seo/
+python3 /opt/pool-seo/build-seo.py --site https://theminershaven.org --out /var/www/pool-ui
+echo '*/30 * * * * root python3 /opt/pool-seo/build-seo.py --site https://theminershaven.org --out /var/www/pool-ui >/dev/null 2>&1' > /etc/cron.d/pool-seo
+```
+
+Then add the site in [Google Search Console](https://search.google.com/search-console) and
+[Bing Webmaster Tools](https://www.bing.com/webmasters) and submit `https://<your-domain>/sitemap.xml`.

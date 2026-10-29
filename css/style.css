@@ -417,3 +417,14 @@ select.field { appearance: none; padding-right: 32px; background-image: url("dat
   .toasts { left: 16px; right: 16px; max-width: none; }
 }
 .grid-2 > *, .grid-3-1 > *, .stack > *, .kpis > * { min-width: 0; }
+
+/* ---------------- static SEO pages (/coins/...) ---------------- */
+.static-nav { margin-left: auto; }
+.seo-static h1 { font-size: 30px; margin: 0 0 12px; }
+.seo-static h2 { font-size: 20px; margin: 28px 0 10px; }
+.seo-static p, .seo-static li { color: var(--text-2, #a1a1aa); line-height: 1.7; }
+.seo-static a { color: var(--accent); }
+@media (max-width: 860px) {
+  .mainnav.static-nav { display: flex; position: static; flex-direction: row; flex-wrap: wrap; background: none; border: 0; padding: 0; margin-left: auto; }
+  .mainnav.static-nav a { padding: 6px 8px; font-size: 13px; }
+}
