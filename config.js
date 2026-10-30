@@ -10,7 +10,7 @@ window.POOL_CONFIG = {
   name: "Miners Haven",
   tagline: "Built by miners, for miners",
   description:
-    "Bitcoin, Litecoin, Dogecoin and Zano. Choose high-stakes SOLO mining or steady PPLNS payouts on every coin, with transparent live stats and automatic payouts, 24/7.",
+    "Bitcoin, Litecoin, Dogecoin, Zano, Neoxa and Quantus. Choose high-stakes SOLO mining or steady PPLNS payouts on every coin, with transparent live stats and automatic payouts, 24/7.",
   logo: null, // e.g. "img/logo.svg" — leave null to use the built-in mark
 
   // Miningcore API. Use "/api" when the UI is served from the same host
@@ -33,7 +33,7 @@ window.POOL_CONFIG = {
   // pingUrl (optional): any small HTTPS URL on that server, used to show latency.
   stratumLocations: [
     // One VPS for now. Add more servers here later (host + optional pingUrl).
-    { country: "Main server", city: "", region: "", flag: null, host: "theminershaven.org", pingUrl: "https://theminershaven.org/api/health-check" }
+    { country: "Germany", city: "", region: "Europe", flag: "de", host: "theminershaven.org", pingUrl: "https://theminershaven.org/api/health-check" }
   ],
 
   // Optional per-symbol icon overrides. Unknown coins get a generated badge.
@@ -43,7 +43,7 @@ window.POOL_CONFIG = {
 
   links: {
     telegram: null, // "https://t.me/yourpool"
-    discord: null,
+    discord: "https://discord.gg/rfQRS5P",
     twitter: null,
     support: null // "mailto:support@example.com"
   },

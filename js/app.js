@@ -44,6 +44,7 @@
     $("#footer-brand").innerHTML = brandMark() + brandName();
     $("#footer-copy").textContent = `© ${new Date().getFullYear()} ${C.name}. All rights reserved.`;
     if (C.links?.telegram) { const t = $("#toplink-telegram"); t.href = C.links.telegram; t.hidden = false; }
+    if (C.links?.discord) ["#toplink-discord", "#footer-discord"].forEach((s) => { const d = $(s); if (d) { d.href = C.links.discord; d.hidden = false; } });
     $("#menu-btn").addEventListener("click", () => $("#mainnav").classList.toggle("open"));
     $("#mainnav").addEventListener("click", (e) => { if (e.target.closest("a")) $("#mainnav").classList.remove("open"); });
     API.onStatus((s) => {
@@ -839,7 +840,7 @@
   /* ---------------- FAQ / API ---------------- */
   function pageFaq() {
     app.innerHTML = `<div class="container" style="max-width:820px">
-      <div class="page-head"><h1>Frequently Asked Questions</h1><p>Can't find your answer? ${C.links?.support ? `<a class="accent" href="${esc(C.links.support)}">Contact support</a>.` : C.links?.telegram ? `<a class="accent" href="${esc(C.links.telegram)}" target="_blank" rel="noopener">Ask on Telegram</a>.` : ""}</p></div>
+      <div class="page-head"><h1>Frequently Asked Questions</h1><p>Can't find your answer? ${C.links?.support ? `<a class="accent" href="${esc(C.links.support)}">Contact support</a>.` : C.links?.discord ? `<a class="accent" href="${esc(C.links.discord)}" target="_blank" rel="noopener">Ask on Discord</a>.` : C.links?.telegram ? `<a class="accent" href="${esc(C.links.telegram)}" target="_blank" rel="noopener">Ask on Telegram</a>.` : ""}</p></div>
       <div style="margin-top:20px">${(C.faq || []).map((f, i) => `<details class="faq-item" ${i === 0 ? "open" : ""}><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div></div>`;
   }
   function pageApi() {
