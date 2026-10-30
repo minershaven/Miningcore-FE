@@ -326,6 +326,13 @@ td .sub { font-size: 11.5px; color: var(--muted); }
 select.field { appearance: none; padding-right: 32px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c7c85' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; }
 .lookup .field.grow { flex: 1 1 320px; }
 
+/* ---------- solo block calculator ---------- */
+.calc-form .field.grow { flex: 1 1 140px; }
+.calc-form select.field { flex: 0 0 110px; }
+.calc-out { margin-top: 16px; }
+.calc-out:empty { display: none; }
+.calc-note { font-size: 12.5px; line-height: 1.55; margin: 14px 0 0; }
+
 /* ---------- code ---------- */
 .codebox { position: relative; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-family: var(--mono); font-size: 12.5px; color: var(--text-2); overflow-x: auto; white-space: pre; }
 .codebox .copy { position: absolute; top: 8px; right: 8px; }

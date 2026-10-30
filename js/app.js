@@ -466,7 +466,9 @@
           </dl>
         </div>
       </div>
+      ${soloCalcCard(pool)}
       <div class="card" style="margin-top:16px"><div class="card-head"><h3>Top Miners</h3><span class="muted">Last 24 hours</span></div>${minersTable(pool, pool.topMiners || [])}</div>`;
+      bindSoloCalc(el, pool);
       Charts.lineChart($("#pool-chart"), {
         series: [
           { name: "Hashrate", color: "#3b82f6", values: perf.map((d) => ({ t: +new Date(d.created), v: d.poolHashrate })) },
@@ -507,6 +509,90 @@
       el.innerHTML = paymentsTable(r.items, pool, { pageKey: key, pageCount: r.pageCount });
       bindPager(el, () => renderPoolTab(pool, perf, portsArr));
     }
+  }
+
+  /* ---------------- solo block calculator ---------------- */
+  // Hashes needed (on average) to find one block, per unit of network difficulty.
+  // Checked against live pools: difficulty × factor ÷ network hashrate matches each
+  // coin's block time (BTC ~600s, LTC ~150s, DOGE ~60s, ZANO ~120s, NEOX ~60s, QTC ~12s).
+  // Families not listed here get no calculator; add them via POOL_CONFIG.hashesPerDifficulty.
+  const HASHES_PER_DIFF = { bitcoin: 2 ** 32, progpow: 2 ** 32, zano: 1, cryptonote: 1, quantus: 1, ...(C.hashesPerDifficulty || {}) };
+  const CALC_UNITS = [["H/s", 1], ["KH/s", 1e3], ["MH/s", 1e6], ["GH/s", 1e9], ["TH/s", 1e12], ["PH/s", 1e15], ["EH/s", 1e18]];
+
+  function hashesPerBlock(pool) {
+    const f = HASHES_PER_DIFF[pool.coin?.family];
+    const d = Number(pool.networkStats?.networkDifficulty);
+    return f && d > 0 ? f * d : null;
+  }
+  function defaultCalcUnit(pool) {
+    const a = (pool.coin?.algorithm || "").toLowerCase();
+    if (a.startsWith("sha256")) return "TH/s";
+    if (a === "scrypt") return "GH/s";
+    return "MH/s";
+  }
+  function calcState(pool) {
+    S.calc = S.calc || {};
+    if (!S.calc[pool.id]) {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem("soloCalc:" + pool.id) || "null"); } catch (e) { saved = null; }
+      S.calc[pool.id] = saved && CALC_UNITS.some(([u]) => u === saved.unit)
+        ? { hr: String(saved.hr ?? ""), unit: saved.unit }
+        : { hr: "", unit: defaultCalcUnit(pool) };
+    }
+    return S.calc[pool.id];
+  }
+  function soloCalcCard(pool) {
+    if (F.scheme(pool) !== "SOLO" || !hashesPerBlock(pool)) return "";
+    const st = calcState(pool);
+    return `<div class="card" style="margin-top:16px" id="solo-calc">
+      <div class="card-head"><h3>Solo Block Calculator</h3><span class="muted">How long until your hashrate finds a ${sym(pool)} block on its own</span></div>
+      <div class="card-pad">
+        <form class="lookup calc-form" autocomplete="off">
+          <input class="field grow" name="hr" type="number" inputmode="decimal" min="0" step="any" placeholder="Your hashrate" value="${esc(st.hr)}" aria-label="Your hashrate">
+          <select class="field" name="unit" aria-label="Hashrate unit">${CALC_UNITS.map(([u]) => `<option${u === st.unit ? " selected" : ""}>${u}</option>`).join("")}</select>
+        </form>
+        <div class="kpis calc-out"></div>
+        <p class="muted calc-note"></p>
+      </div>
+    </div>`;
+  }
+  function bindSoloCalc(root, pool) {
+    const card = $("#solo-calc", root);
+    if (!card) return;
+    const form = $(".calc-form", card), out = $(".calc-out", card), note = $(".calc-note", card);
+    const st = calcState(pool);
+    const chance = (sec, T) => 1 - Math.exp(-sec / T); // block finds are a Poisson process
+    const pctTxt = (p) => p >= 0.9995 ? "&gt;99.9%" : p <= 0 ? "0%" : p < 0.0001 ? "&lt;0.01%" : (p * 100).toFixed(p < 0.1 ? 2 : 1) + "%";
+    const countTxt = (n) => n >= 100 ? F.num(n) : n >= 0.01 ? F.num(n, 2) : "&lt;0.01";
+    const tile = (l, v, s) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+
+    function render() {
+      st.hr = form.hr.value;
+      st.unit = form.unit.value;
+      try { localStorage.setItem("soloCalc:" + pool.id, JSON.stringify(st)); } catch (e) { /* private mode etc. */ }
+      const ns = pool.networkStats || {};
+      const h = parseFloat(st.hr) * (CALC_UNITS.find(([u]) => u === st.unit) || CALC_UNITS[0])[1];
+      if (!(h > 0)) {
+        out.innerHTML = "";
+        note.innerHTML = `Enter your hashrate to see your odds at the current network difficulty of ${F.si(ns.networkDifficulty)}.`;
+        return;
+      }
+      const T = hashesPerBlock(pool) / h; // average seconds per block for this hashrate
+      out.innerHTML =
+        tile("Average time to a block", F.duration(T), "At today's difficulty") +
+        tile("50% chance within", F.duration(T * Math.LN2), "A coin flip by then") +
+        tile("Chance in 24 hours", pctTxt(chance(86400, T)), `7 days: ${pctTxt(chance(7 * 86400, T))}`) +
+        tile("Chance in 30 days", pctTxt(chance(30 * 86400, T)), `Expected blocks: ${countTxt(30 * 86400 / T)}`);
+      const net = Number(ns.networkHashrate);
+      note.innerHTML = `Based on network difficulty ${F.si(ns.networkDifficulty)}${net > 0 ? ` (network ${esc(F.hashrate(net))}, your share ${pctTxt(h / net)})` : ""}. ` +
+        "Solo mining is pure luck: every hash is a fresh roll of the dice, so you can find a block far sooner or far later than the average. " +
+        "Difficulty moves with the network, so the odds change over time.";
+    }
+
+    form.addEventListener("submit", (e) => e.preventDefault());
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    render();
   }
 
   function minersTable(pool, miners, offset = 0) {
